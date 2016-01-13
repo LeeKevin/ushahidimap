@@ -1,0 +1,15 @@
+{
+  "name": "ushahidimap",
+  "version": "1.0.0",
+  "description": "A map with markers for donor and government-funded projects in Kenya.",
+  "author": "Kevin Lee",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "laravel-elixir": "^4.2.0"
+  },
+  "dependencies": {
+    "font-awesome": "^4.5.0",
+    "jquery": "^2.2.0",
+    "leaflet": "^0.7.7"
+  }
+}
