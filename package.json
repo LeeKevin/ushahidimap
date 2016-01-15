@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "description": "A map with markers for donor and government-funded projects in Kenya.",
   "author": "Kevin Lee",
-  "devDependencies": {
-    "gulp": "^3.9.0",
-    "laravel-elixir": "^4.2.0"
-  },
   "dependencies": {
+    "babel-preset-es2015": "^6.3.13",
+    "babel-preset-react": "^6.3.13",
     "font-awesome": "^4.5.0",
+    "gulp": "^3.9.0",
+    "gulp-html-to-json": "^0.1.5",
     "jquery": "^2.2.0",
+    "laravel-elixir": "^4.2.0",
     "leaflet": "^0.7.7"
   }
 }

@@ -1,0 +1,26 @@
+@import "imports";
+@import "global/template";
+
+#ushahidimap {
+  height: 300px;
+  margin: 0 auto 20px auto;
+  max-width: 1000px;
+  position: relative;
+}
+
+.map-popup {
+  label {
+    font-weight: bold;
+    display: block;
+    margin: .3em 0;
+    color: #555;
+  }
+  p {
+    margin: 0 0 0 .5em;
+  }
+  .scrollable-content {
+    max-height: 175px;
+    overflow-y: scroll;
+    padding: 0 .2em .3em .2em;
+  }
+}
