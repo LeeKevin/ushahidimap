@@ -13,6 +13,8 @@ elixir(function (mix) {
     mix.sass('main.scss', main_style)
         .styles([
             './node_modules/leaflet/dist/leaflet.css',
+            './node_modules/leaflet.markercluster/dist/MarkerCluster.css',
+            './node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css',
             main_style,
         ], style_file)
         .browserify('main.js', script_file, null, {

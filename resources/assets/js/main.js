@@ -1,5 +1,6 @@
 var $ = require('jquery');
 var L = require('leaflet');
+require('leaflet.markercluster');
 
 (function () {
     'use strict';
@@ -89,13 +90,15 @@ var L = require('leaflet');
         },
         populateMarkers: function (map, data) {
             var _this = this;
+
+            var markers = L.markerClusterGroup();
             $.each(data, function (i, project) {
                 if (!project['location2_secondary']['latitude'] || !project['location2_secondary']['longitude']) return true;
 
-                L.marker([project['location2_secondary']['latitude'], project['location2_secondary']['longitude']])
-                    .bindPopup(_this.buildPopup(project))
-                    .addTo(map);
+                markers.addLayer(L.marker([project['location2_secondary']['latitude'], project['location2_secondary']['longitude']])
+                    .bindPopup(_this.buildPopup(project)));
             });
+            map.addLayer(markers);
         }
     };
 
