@@ -139,6 +139,7 @@ L.Icon.Default.imagePath = '/images';
 
             });
 
+            //build the county boundaries layer
             _this.geojson = L.geoJson(data, {
                 style: function (feature) {
                     var countyDensity = countyDensities.hasOwnProperty(feature.properties['COUNTY_NAM'])

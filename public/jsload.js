@@ -39,7 +39,7 @@
             var xhr = new XMLHttpRequest();
 
             //hide body until styles are loaded
-            document.body.style.opacity = 0;
+            document.body.style.display = 'none';
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === XMLHttpRequest.DONE) {
                     if (xhr.status === 200) {
@@ -93,7 +93,7 @@
                 if (element = this.createStylesheetLink(file)) {
                     head.appendChild(element);
                     //show body once styles are loaded
-                    document.body.style.opacity = 100;
+                    document.body.style.display = 'block';
                 }
             }
         },
