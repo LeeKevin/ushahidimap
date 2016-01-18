@@ -1,0 +1,6 @@
+.idea/
+node_modules/
+public/build/
+public/js/
+public/css/
+public/images/
