@@ -280,6 +280,7 @@ L.Icon.Default.imagePath = '/images';
                 '<div class="scrollable-content">' +
                 '<label>Description:</label>' + (project['project_description'] ? '<p>' + project['project_description'] + '</p>' : 'N/A') +
                 '<label>Objectives:</label>' + (project['project_objectives'] ? '<p>' + project['project_objectives'] + '</p>' : 'N/A') +
+                '<label>Total Cost:</label>' + (UshahidiMap.Util.isNumeric(project['total_project_cost_kes']) ? '<p>$' + UshahidiMap.Util.numberWithCommas(project['total_project_cost_kes']) + '</p>' : 'N/A') +
                 '</div>'
             );
         };
