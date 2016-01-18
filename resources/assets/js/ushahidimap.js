@@ -11,6 +11,7 @@ L.Icon.Default.imagePath = '/images';
     };
 
     UshahidiMap.Map = (function ($, L) {
+        var DEFAULT_CHOROPLETH = 'PROJECTS_COUNT';
         var grades = {
             PROJECTS_COUNT: {
                 title: 'Number of projects',
@@ -25,7 +26,7 @@ L.Icon.Default.imagePath = '/images';
             },
             PROJECT_COST: {
                 title: 'Average project cost',
-                values: [0, 10, 20, 50, 100],
+                values: [0, 500000000, 1000000000, 2000000000, 5000000000],
                 colors: [
                     "#ffffcc",
                     "#c2e699",
@@ -71,7 +72,8 @@ L.Icon.Default.imagePath = '/images';
                 'project_title': null,
                 'project_description': null,
                 'project_objectives': null,
-                'county': null
+                'county': null,
+                'total_project_cost_kes': null
             };
 
             //Find the position of the desired columns
@@ -120,39 +122,39 @@ L.Icon.Default.imagePath = '/images';
             _this.map.addLayer(markers);
         }
 
-        function defineCounties(data, type) {
+        function defineCounties(data) {
             var _this = this, countyDensities = {};
-            if (typeof type == 'undefined') type = 'PROJECTS_COUNT';
 
-            //clear existing geojson layer
+            //clear any existing geojson layer
             if (_this.geojson) _this.map.removeLayer(_this.geojson);
 
             //calculate county density
             $.each(_this.projects, function (i, project) {
                 if (!project['county'] || !project['location2_secondary']['latitude'] || !project['location2_secondary']['longitude']) return true;
 
-                //check if county name exists in our object
-                countyDensities[project['county']] = (
-                        countyDensities.hasOwnProperty(project['county']) && UshahidiMap.Util.isNumeric(countyDensities[project['county']])
-                            ? countyDensities[project['county']] : 0
+                //check if county name exists in our object and increment the property
+                if (!countyDensities.hasOwnProperty(project['county'])) countyDensities[project['county']] = {};
+                countyDensities[project['county']]['PROJECTS_COUNT'] = (
+                        UshahidiMap.Util.isNumeric(countyDensities[project['county']]['PROJECTS_COUNT'])
+                            ? countyDensities[project['county']]['PROJECTS_COUNT'] : 0
                     ) + 1;
 
+                if (!countyDensities[project['county']].hasOwnProperty('PROJECT_COST')) countyDensities[project['county']]['PROJECT_COST'] = {};
+                //sum of all total for a county
+                countyDensities[project['county']]['PROJECT_COST']['total'] = (
+                        UshahidiMap.Util.isNumeric(countyDensities[project['county']]['PROJECT_COST']['total'])
+                            ? countyDensities[project['county']]['PROJECT_COST']['total'] : 0
+                    ) + (UshahidiMap.Util.isNumeric(project['total_project_cost_kes']) ? parseInt(project['total_project_cost_kes']) : 0);
+
+                //count of projects with reported project costs (we'll ignore the other ones)
+                countyDensities[project['county']]['PROJECT_COST']['count'] = (
+                        UshahidiMap.Util.isNumeric(countyDensities[project['county']]['PROJECT_COST']['count'])
+                            ? countyDensities[project['county']]['PROJECT_COST']['count'] : 0
+                    ) + (UshahidiMap.Util.isNumeric(project['total_project_cost_kes']) ? 1 : 0);
             });
 
             //build the county boundaries layer
             _this.geojson = L.geoJson(data, {
-                style: function (feature) {
-                    var countyDensity = countyDensities.hasOwnProperty(feature.properties['COUNTY_NAM'])
-                        ? countyDensities[feature.properties['COUNTY_NAM']]
-                        : 0;
-                    return {
-                        color: "#fff",
-                        dashArray: '3',
-                        weight: 2,
-                        fillColor: getCountyColor(countyDensity, type),
-                        fillOpacity: .75
-                    };
-                },
                 onEachFeature: function (feature, layer) {
                     layer.on({
                         mouseover: function (e) {
@@ -170,9 +172,37 @@ L.Icon.Default.imagePath = '/images';
 
             _this.countyDensities = countyDensities;
 
-            //build the corresponding legend
-            buildLegend(type).addTo(_this.map);
+            //build toggle
+            buildToggle.call(_this).addTo(_this.map);
+            _this.toggleChoropleth(_this.type = DEFAULT_CHOROPLETH);
+            //build the info box
             _this.infobox = buildInfoBox().addTo(_this.map);
+        }
+
+        function buildToggle() {
+            var _this = this;
+            var toggle = L.control({position: 'topleft'});
+
+            toggle.onAdd = function () {
+                var toggleElement = $(L.DomUtil.create('div', 'toggle info'));
+
+                $.each(grades, function (type, data) {
+                    var radioButton = $('<input type="radio" name="choropleth" data-type="'
+                        + type + '" id="' + type.toLowerCase() + '" ' +
+                        (type == 'PROJECTS_COUNT' ? 'checked' : '')
+                        + ' />');
+                    toggleElement
+                        .append(radioButton)
+                        .append('<label for="' + type.toLowerCase() + '">' + data['title'] + '</label>');
+                    radioButton.bind('click', function () {
+                        _this.toggleChoropleth(_this.type = $(this).attr('data-type'));
+                    });
+                });
+
+                return toggleElement[0];
+            };
+
+            return toggle;
         }
 
         function buildLegend(type) {
@@ -187,9 +217,9 @@ L.Icon.Default.imagePath = '/images';
                     div.innerHTML +=
                         '<i style="background:' + grades[type].colors[i] + '"></i> ' +
                         '<span class="legend-digit">' +
-                        grades[type].values[i] + (grades[type].values[i + 1] ? '' : '+') +
+                        UshahidiMap.Util.largeNumber(grades[type].values[i]) + (grades[type].values[i + 1] ? '' : '+') +
                         '</span>' +
-                        (grades[type].values[i + 1] ? '&ndash;' + '<span class="legend-digit">' + grades[type].values[i + 1] + '</span>' + '<br />' : '');
+                        (grades[type].values[i + 1] ? '&ndash;' + '<span class="legend-digit">' + UshahidiMap.Util.largeNumber(grades[type].values[i + 1]) + '</span>' + '<br />' : '');
                 }
 
                 return div;
@@ -212,9 +242,11 @@ L.Icon.Default.imagePath = '/images';
 
             };
 
-            infobox.update = function (countyName, density) {
+            infobox.update = function (countyName, data) {
                 this._div.innerHTML = '<h4>' + UshahidiMap.Util.toTitleCase(countyName) + '</h4>' +
-                    '<label>' + 'Number of projects: ' + '</label>' + (UshahidiMap.Util.isNumeric(density) ? density : 0)
+                    '<label>Number of projects:</label> ' + data['PROJECTS_COUNT'] + '<br />' +
+                    '<label>Projects with reported cost:</label> ' + data['PROJECT_COST']['count'] + '<br />' +
+                    '<label>Total cost:</label> $' + UshahidiMap.Util.numberWithCommas(data['PROJECT_COST']['total'])
                 ;
             };
 
@@ -231,6 +263,14 @@ L.Icon.Default.imagePath = '/images';
 
             return fillColor;
         }
+
+        Map.prototype.toggleChoropleth = function (type) {
+            if (this.legend) this.map.removeControl(this.legend);
+
+            //build the corresponding legend
+            this.legend = buildLegend(type).addTo(this.map);
+            this.setCountyLayerStyle(type);
+        };
 
         Map.prototype.buildProjectPopup = function (project) {
             return L.popup({
@@ -258,16 +298,49 @@ L.Icon.Default.imagePath = '/images';
 
             this.infobox.update(layer.feature.properties['COUNTY_NAM'], this.countyDensities.hasOwnProperty(layer.feature.properties['COUNTY_NAM'])
                 ? this.countyDensities[layer.feature.properties['COUNTY_NAM']]
-                : 0);
+                : null);
         };
 
         Map.prototype.resetLayerStyle = function (layer) {
-            this.geojson.resetStyle(layer);
+            layer.setStyle(this.generateCountyStyle(layer.feature, this.type));
             this.infobox.resetContent();
         };
 
         Map.prototype.zoomToLayer = function (layer) {
             this.map.fitBounds(layer.getBounds());
+        };
+
+        Map.prototype.setCountyLayerStyle = function (type) {
+            if (Object.keys(grades).indexOf(type) == -1) return;
+            var _this = this;
+
+            _this.geojson.setStyle(function (feature) {
+                return _this.generateCountyStyle(feature, type);
+            });
+        };
+
+        Map.prototype.generateCountyStyle = function (feature, type) {
+            var _this = this;
+
+            var densityValue = 0;
+            if (_this.countyDensities.hasOwnProperty(feature.properties['COUNTY_NAM'])) {
+                if (type == 'PROJECTS_COUNT') {
+                    densityValue = _this.countyDensities[feature.properties['COUNTY_NAM']]['PROJECTS_COUNT'];
+                } else if (type == 'PROJECT_COST') {
+                    var total = _this.countyDensities[feature.properties['COUNTY_NAM']]['PROJECT_COST']['total'];
+                    var count = _this.countyDensities[feature.properties['COUNTY_NAM']]['PROJECT_COST']['count'];
+                    densityValue =
+                        parseFloat(total / count);
+                }
+            }
+
+            return {
+                color: "#fff",
+                dashArray: '3',
+                weight: 2,
+                fillOpacity: .75,
+                fillColor: getCountyColor(densityValue, type)
+            };
         };
 
         return Map;
@@ -293,6 +366,20 @@ L.Icon.Default.imagePath = '/images';
             return str.replace(/\w\S*/g, function (txt) {
                 return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
             });
+        },
+        numberWithCommas: function (num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        },
+        largeNumber: function (num) {
+            // Nine Zeroes for Billions
+            return Math.abs(Number(num)) >= 1.0e+9
+                ? Math.abs(Number(num)) / 1.0e+9 + "B"
+                : Math.abs(Number(num)) >= 1.0e+6
+                ? Math.abs(Number(num)) / 1.0e+6 + "M"
+                : Math.abs(Number(num)) >= 1.0e+3
+                ? Math.abs(Number(num)) / 1.0e+3 + "K"
+                : Math.abs(Number(num));
+
         }
     };
 
