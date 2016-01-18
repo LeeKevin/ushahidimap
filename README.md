@@ -1,6 +1,7 @@
 #Ushahidi Map
 
 A map of donor and government-funded projects in Kenya.
+Demo: http://leekevin.github.io/ushahidimap/
 
 ##Set-up
 
